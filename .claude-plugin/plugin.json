@@ -1,6 +1,6 @@
 {
   "name": "fable-advisor",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Run your session on Claude's most capable model as a full-time architect: it writes specs and verdicts while Sonnet, Opus, and GPT-5.5 (via codex) lanes do the typing. Fable-level judgment, Sonnet-level bills.",
   "author": {
     "name": "Dan McAteer",
