@@ -1,12 +1,21 @@
 {
   "name": "fable-advisor",
-  "version": "2.1.0",
-  "description": "Run your session on Claude's most capable model as a full-time architect: it writes specs and verdicts while Sonnet, Opus, and GPT-5.5 (via codex) lanes do the typing. Fable-level judgment, Sonnet-level bills.",
+  "version": "3.0.0",
+  "description": "Run your session on Claude's most capable model as a full-time architect: it writes specs and verdicts while Grok 4.5 (via the Grok CLI) and GPT-5.5 (via codex) lanes do the typing. Fable-level judgment, cross-vendor implementation, cheap-lane bills.",
   "author": {
     "name": "Dan McAteer",
     "url": "https://github.com/DannyMac180"
   },
   "homepage": "https://github.com/DannyMac180/fable-advisor",
   "license": "MIT",
-  "keywords": ["agents", "model-routing", "fable", "advisor", "orchestration", "architect", "codex"]
+  "keywords": [
+    "agents",
+    "model-routing",
+    "fable",
+    "advisor",
+    "orchestration",
+    "architect",
+    "grok",
+    "codex"
+  ]
 }
