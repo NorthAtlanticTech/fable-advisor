@@ -17,7 +17,7 @@ The plugin ships the **orchestration skill** — the routing doctrine that teach
 ## Install
 
 ```
-claude plugin marketplace add DannyMac180/fable-advisor
+claude plugin marketplace add NorthAtlanticTech/fable-advisor
 claude plugin install fable-advisor@fable-advisor
 ```
 
