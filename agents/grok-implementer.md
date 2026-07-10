@@ -54,7 +54,7 @@ T=$(command -v gtimeout || command -v timeout || true)
 [ -z "$T" ] && echo "WARN: no timeout binary — the agent runs uncapped (brew install coreutils to cap)"
 
 ${T:+$T 600} "$AGENT" -p "$(cat "$SPEC")" \
-  --model grok-4.5 \
+  --model grok-4.5-xhigh \
   --force \
   --output-format text \
   --workspace "$(pwd)" \
@@ -67,13 +67,13 @@ Flag discipline (non-negotiable):
 | Flag | Why |
 |---|---|
 | `-p "$(cat "$SPEC")"` | Headless single-task print run, prompt read from the spec file. No inline quoting hazards, no truncated specs. |
-| `--model grok-4.5` | The lane's producer is Grok 4.5, pinned explicitly — never rely on the CLI default. |
+| `--model grok-4.5-xhigh` | The lane's producer is Grok 4.5, pinned explicitly — never rely on the CLI default. |
 | `--force` | Required in print mode — without it edits are only *proposed*, never applied. It also lets the agent run commands unattended, which is why your independent re-verification below is mandatory, not optional. |
 | `--workspace "$(pwd)"` | Deterministic working root. |
 | `--output-format text` | Final message to stdout, captured for the report. |
 | `${T:+$T 600}` | Ten-minute wall clock when `timeout`/`gtimeout` exists. On timeout, report `STATUS: timeout` with whatever landed. |
 
-`--model grok-4.5` is the current top Grok tier — if the caller's spec names a different grok model, use that instead; the slug is a documented default, not a constant (`"$AGENT" --list-models` shows what your account offers).
+`grok-4.5-xhigh` is Cursor's top Grok 4.5 tier (shown as "Cursor Grok 4.5" in `--list-models`); lower-effort tiers exist as `grok-4.5-high` / `grok-4.5-medium`, plus `-fast` variants. If the caller's spec names a different grok model, use that instead; the slug is a documented default, not a constant (`"$AGENT" --list-models` shows what your account offers).
 
 3. **Verify independently.** Read the diff (`git diff` / `git status`), run the spec's verification command yourself, and read the agent's final message from `"$FINAL"`. Grok's claim of success is not evidence; your re-run is — especially since `--force` let it run commands without review.
 
