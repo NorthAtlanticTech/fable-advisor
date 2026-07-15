@@ -1,0 +1,29 @@
+name: commit-lint
+
+# Keep bumps consistent: every commit in a PR must be a valid Conventional Commit
+# so the release job can classify it. Non-conforming messages fail here, not silently
+# at release time (where they'd produce no version bump).
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet commitizen
+
+      - name: Check commit messages
+        run: cz check --rev-range ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}

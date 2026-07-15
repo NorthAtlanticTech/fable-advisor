@@ -1,0 +1,13 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "scm"
+major_version_zero = false
+update_changelog_on_bump = true
+changelog_merge_prerelease = true
+# The git tag is the source of truth; mirror the resolved version into the
+# plugin manifest so Claude Code's marketplace picks up the new release.
+version_files = [
+  '.claude-plugin/plugin.json:"version"',
+]
