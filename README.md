@@ -99,6 +99,21 @@ touching 3+ files, consult the fable-advisor agent and act on its verdict.
 
 **Why Grok and GPT-5.6 Sol lanes in a Claude plugin?** Vendor diversity. Models from one family share blind spots; an independent implementation from a different lineage catches what same-family review misses — and with Claude as the architect, *every* diff now gets cross-vendor review for free. The architect stays Claude — the lanes are producers, not judges.
 
+## Releases
+
+Versioning is automated. Every push to `main` runs commitizen ([`.github/workflows/release.yml`](.github/workflows/release.yml)): it reads the [Conventional Commits](https://www.conventionalcommits.org/) since the last `vX.Y.Z` tag, computes the semver bump, mirrors it into [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json), updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release. Nothing is hand-edited.
+
+Commit type → version bump:
+
+| Commit | Example | Bump |
+|---|---|---|
+| `fix:` | `fix: grok lane no longer swallows timeouts` | patch (`3.1.1 → 3.1.2`) |
+| `feat:` | `feat: add a self-hosted implementer lane` | minor (`3.1.1 → 3.2.0`) |
+| `feat!:` / `BREAKING CHANGE:` | `feat!: rename the advisor agent` | major (`3.1.1 → 4.0.0`) |
+| `docs:`, `chore:`, `ci:`, `refactor:`, `test:`, `style:` | `docs: clarify the spec contract` | none |
+
+A push with only no-bump commits is a clean no-op — no tag, no release. Commit messages are linted on every PR ([`.github/workflows/commit-lint.yml`](.github/workflows/commit-lint.yml)); a non-conforming message fails there rather than silently producing no release. The git tag is the source of truth ([`.cz.toml`](.cz.toml), `version_provider = scm`); `plugin.json` is the mirror. Author commits with `cz commit` (from [commitizen](https://commitizen-tools.github.io/commitizen/)) or write the format by hand.
+
 ## Go deeper
 
 I write [**Attention Heads**](https://attentionheads.substack.com/?utm_source=github&utm_medium=readme&utm_campaign=fable-advisor) — deep, evidence-backed writing on AI, cognition, and agentic engineering. The **Agentic Engineering Field Notes** series is where I publish practical advice on the craft of using AI. [Subscribe](https://attentionheads.substack.com/subscribe?utm_source=github&utm_medium=readme&utm_campaign=fable-advisor) to get new posts to your inbox.
