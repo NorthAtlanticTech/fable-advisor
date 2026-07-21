@@ -1,6 +1,6 @@
 ---
 name: codex-implementer
-description: Cross-vendor implementation lane running GPT-5.6 Sol via the OpenAI Codex CLI (`codex exec`, reasoning effort high). Route work here when correctness or completeness is critical enough to justify a second model family, or when you want an independent non-Anthropic implementation to compare against a Claude lane. Receives the same complete spec as the implementer agent; drives codex to write the code; returns a structured report with verification evidence. Requires the `codex` CLI installed and authenticated — reports a structured error if it is missing, never silently substitutes itself.
+description: Cross-vendor implementation lane running GPT-5.6 Sol via the OpenAI Codex CLI (`codex exec`, reasoning effort high, fast service tier). Route work here when correctness or completeness is critical enough to justify a second model family, or when you want an independent non-Anthropic implementation to compare against a Claude lane. Receives the same complete spec as the implementer agent; drives codex to write the code; returns a structured report with verification evidence. Requires the `codex` CLI installed and authenticated — reports a structured error if it is missing, never silently substitutes itself.
 model: sonnet
 tools: Bash, Read, Grep, Glob
 ---
@@ -48,7 +48,7 @@ and include its actual output in your final message."]
 SPEC_EOF
 ```
 
-2. Invoke codex non-interactively, sandboxed to the workspace, with reasoning effort pinned high:
+2. Invoke codex non-interactively, sandboxed to the workspace, with reasoning effort pinned high on the fast service tier:
 
 ```bash
 # Portable timeout: macOS has no `timeout` unless coreutils is installed
@@ -58,6 +58,7 @@ T=$(command -v gtimeout || command -v timeout || true)
 ${T:+$T 600} codex exec \
   --model gpt-5.6-sol \
   -c model_reasoning_effort=high \
+  -c service_tier="fast" \
   --sandbox workspace-write \
   --skip-git-repo-check \
   --cd "$(pwd)" \
@@ -71,6 +72,7 @@ Flag discipline (non-negotiable):
 |---|---|
 | `--sandbox workspace-write` | Codex writes code, scoped to the working tree. Never `danger-full-access`. |
 | `-c model_reasoning_effort=high` | Pins GPT-5.6 Sol to high reasoning for complex implementation work. |
+| `-c service_tier="fast"` | Runs on the fast service tier — same model, faster turnaround. |
 | `--skip-git-repo-check` + `--cd "$(pwd)"` | Deterministic working root; works outside git repos. |
 | `- < spec file` | Prompt via stdin. No quoting hazards, no truncated specs. |
 | `${T:+$T 600}` | Ten-minute wall clock when `timeout`/`gtimeout` exists (macOS needs `brew install coreutils`); runs uncapped otherwise. On timeout, report `STATUS: timeout` with whatever landed. |
