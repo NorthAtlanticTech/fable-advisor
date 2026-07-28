@@ -23,13 +23,15 @@ What stays with the architect regardless of cost: decomposition, interface desig
 
 | Lane | Producer | Invoke | Route here when |
 |---|---|---|---|
-| Routine | Grok 4.5 | `grok-implementer` agent | The spec fully determines the outcome: boilerplate, wiring, CRUD, mechanical edits, straightforward features. **Default lane.** Requires the [Cursor CLI](https://cursor.com/cli). |
+| Routine | Grok 4.5 | `grok-implementer` agent | The spec fully determines the outcome: boilerplate, wiring, CRUD, mechanical edits, straightforward features. **Default lane.** Requires the [Cursor CLI](https://cursor.com/cli) — see the `cursor-cli` skill. |
 | Cross-vendor | GPT-5.6 Sol (high reasoning) | `codex-implementer` agent | Correctness/completeness is critical enough to want a second implementation. Requires the codex CLI. |
 | Judgment | Fable 5 | `fable-advisor` agent | Not an implementation lane. See "Commitment boundaries" below. |
 
 Deciding rule: how much does the outcome depend on judgment the spec can't capture? Little → the default grok lane; you will verify anyway. A lot, and mistakes are costly → race both lanes (see [Parallelism](#parallelism)) or keep that piece with the architect.
 
 Grok vs codex is not a capability ranking — it's a failure-distribution question. Both are non-Anthropic families, so either lane's output gets genuine cross-vendor review from the Claude architect.
+
+Both CLI lanes shell out, so a lane can report success while a *host* constraint silently voided the run — the Cursor CLI in particular exits 0 after a sandbox-blocked startup write. Never accept an exit code as the evidence; see the `cursor-cli` skill for the zero-exit failure signatures.
 
 If a lane returns `unavailable` or `timeout`, re-route the same spec to the other lane and say so explicitly in your report — never quietly absorb the substitution. If both CLI lanes are unavailable, implement with a Claude subagent and state the downgrade plainly.
 
