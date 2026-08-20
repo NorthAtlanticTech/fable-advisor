@@ -29,7 +29,7 @@ First action, always (unsandboxed, per above):
 
 ```bash
 AGENT=$(command -v agent || command -v cursor-agent || true)
-MODEL=cursor-grok-4.6-high
+MODEL=cursor-grok-4.6-high-fast
 
 [ -n "$AGENT" ] && "$AGENT" --version && "$AGENT" status 2>&1 | head -3
 
@@ -51,7 +51,7 @@ GROK REPORT
 STATUS: unavailable
 REASON: [cursor agent not found on PATH — install via https://cursor.com/cli
        | not authenticated — exact `agent status` output
-       | model slug cursor-grok-4.6-high absent from --list-models — available: <list>]
+       | model slug cursor-grok-4.6-high-fast absent from --list-models — available: <list>]
 ```
 
 You never implement the task yourself as a fallback. A grok lane that quietly becomes a Claude lane defeats the routing — the caller chose this lane's cost and vendor profile deliberately.
@@ -90,7 +90,7 @@ T=$(command -v gtimeout || command -v timeout || true)
 [ -z "$T" ] && echo "WARN: no timeout binary — the agent runs uncapped (brew install coreutils to cap)"
 
 ${T:+$T 600} "$AGENT" -p "$(cat "$SPEC")" \
-  --model cursor-grok-4.6-high \
+  --model cursor-grok-4.6-high-fast \
   --force \
   --trust \
   --output-format text \
@@ -103,14 +103,14 @@ Flag discipline (non-negotiable):
 | Flag | Why |
 |---|---|
 | `-p "$(cat "$SPEC")"` | Headless single-task print run, prompt read from the spec file. No inline quoting hazards, no truncated specs. |
-| `--model cursor-grok-4.6-high` | The lane's producer is Grok 4.6 at its named-model default effort, pinned explicitly — never rely on the CLI default, and never ship an unverified slug (see preflight gate 2). |
+| `--model cursor-grok-4.6-high-fast` | The lane's producer is Grok 4.6 at high effort on the Fast tier, pinned explicitly — never rely on the CLI default, and never ship an unverified slug (see preflight gate 2). |
 | `--force` | Required in print mode — without it edits are only *proposed*, never applied. It also lets the agent run commands unattended, which is why your independent re-verification below is mandatory, not optional. |
 | `--trust` | Suppresses the interactive "Workspace Trust Required" prompt in an untrusted directory. Headless-only flag; without it a `-p` run can sit on a prompt nobody can answer and exit 0 having done nothing. |
 | `--workspace "$(pwd)"` | Deterministic working root. |
 | `--output-format text` | Final message to stdout, captured for the report. (`json` / `stream-json` also exist if the caller wants structured output.) |
 | `${T:+$T 600}` | Ten-minute wall clock when `timeout`/`gtimeout` exists. On timeout, report `STATUS: timeout` with whatever landed. |
 
-**Model tiers.** Cursor's Grok 4.6 supports four effort tiers: `cursor-grok-4.6-low`, `cursor-grok-4.6-medium`, `cursor-grok-4.6-high` (the named-model default and this lane's default), and `cursor-grok-4.6-xhigh`. Fast variants add `-fast`. Availability varies by plan and team policy, so accept no tier by assumption: if the caller's spec names a different Grok model, run that exact slug through the same `--list-models` check first.
+**Model tiers.** Cursor's Grok 4.6 supports four effort tiers: `cursor-grok-4.6-low`, `cursor-grok-4.6-medium`, `cursor-grok-4.6-high` (the named-model default), and `cursor-grok-4.6-xhigh`. Fast variants add `-fast`; this lane deliberately defaults to `cursor-grok-4.6-high-fast`. Availability varies by plan and team policy, so accept no tier by assumption: if the caller's spec names a different Grok model, run that exact slug through the same `--list-models` check first.
 
 3. **Never treat exit 0 as success.** The Cursor CLI exits 0 on several failure modes that changed nothing. Assert on artifacts, not status codes: the final-message file must be non-empty and describe real work, and `git status` / `git diff` must show actual edits.
 

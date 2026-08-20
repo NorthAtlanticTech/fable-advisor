@@ -13,7 +13,7 @@ Run the wrapping Bash call **with the host command sandbox disabled** (`dangerou
 
 ```bash
 AGENT=$(command -v agent || command -v cursor-agent || true)
-MODEL=cursor-grok-4.6-high
+MODEL=cursor-grok-4.6-high-fast
 SPEC=$(mktemp -t agent-spec.XXXXXX)
 FINAL=$(mktemp -t agent-final.XXXXXX)
 
@@ -52,7 +52,7 @@ ${T:+$T 600} "$AGENT" -p "$(cat "$SPEC")" \
 
 **The CLI silently accepts unknown slugs and answers anyway**, falling back to some other model with no error — a typo swaps the producer and defeats cross-vendor routing invisibly. There is no error to catch; the `--list-models` check is the only detection.
 
-Grok 4.6 supports `cursor-grok-4.6-low`, `cursor-grok-4.6-medium`, `cursor-grok-4.6-high` (the named-model default), and `cursor-grok-4.6-xhigh`; Fast variants add `-fast`. Account, plan, and team-policy availability can differ, so the live `--list-models` output remains authoritative.
+Grok 4.6 supports `cursor-grok-4.6-low`, `cursor-grok-4.6-medium`, `cursor-grok-4.6-high` (the named-model default), and `cursor-grok-4.6-xhigh`; Fast variants add `-fast`. This plugin pins `cursor-grok-4.6-high-fast`. Account, plan, and team-policy availability can differ, so the live `--list-models` output remains authoritative.
 
 ## Exit codes lie
 
