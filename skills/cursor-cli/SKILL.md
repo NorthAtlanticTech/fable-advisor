@@ -1,6 +1,6 @@
 ---
 name: cursor-cli
-description: Operator's reference for driving the Cursor CLI (`agent`) headlessly — canonical print-mode invocation, verified Grok/model slugs, the failure signatures that exit 0 while doing nothing, sandbox and workspace-trust requirements, Keychain/CURSOR_API_KEY auth, and session resume. USE WHEN invoking or debugging the `agent` / `cursor-agent` CLI, running the grok-implementer lane, seeing an EPERM on ~/.cursor/cli-config.json, a "Workspace Trust Required" prompt, certificate trust-settings noise, an empty agent run, or a lane that reported success without changing any files.
+description: Operator's reference for driving the Cursor CLI (`agent`) headlessly — canonical print-mode invocation, verified Grok/model slugs, the failure signatures that exit 0 while doing nothing, sandbox and workspace-trust requirements, inherited CURSOR_API_KEY/stored-login auth, and session resume. USE WHEN invoking or debugging the `agent` / `cursor-agent` CLI, running the grok-implementer lane, seeing an EPERM on ~/.cursor/cli-config.json, a "Workspace Trust Required" prompt, certificate trust-settings noise, an empty agent run, or a lane that reported success without changing any files.
 ---
 
 # Cursor CLI — headless operator's card
@@ -13,7 +13,7 @@ Run the wrapping Bash call **with the host command sandbox disabled** (`dangerou
 
 ```bash
 AGENT=$(command -v agent || command -v cursor-agent || true)
-MODEL=cursor-grok-4.5-high
+MODEL=cursor-grok-4.6-high
 SPEC=$(mktemp -t agent-spec.XXXXXX)
 FINAL=$(mktemp -t agent-final.XXXXXX)
 
@@ -52,7 +52,7 @@ ${T:+$T 600} "$AGENT" -p "$(cat "$SPEC")" \
 
 **The CLI silently accepts unknown slugs and answers anyway**, falling back to some other model with no error — a typo swaps the producer and defeats cross-vendor routing invisibly. There is no error to catch; the `--list-models` check is the only detection.
 
-Grok tiers on a Cursor account: `cursor-grok-4.5-high` (= "Cursor Grok 4.5", the top tier), `cursor-grok-4.5-medium`, `cursor-grok-4.5-low`, each with a `-fast` variant. **There is no `xhigh`.**
+Grok 4.6 supports `cursor-grok-4.6-low`, `cursor-grok-4.6-medium`, `cursor-grok-4.6-high` (the named-model default), and `cursor-grok-4.6-xhigh`; Fast variants add `-fast`. Account, plan, and team-policy availability can differ, so the live `--list-models` output remains authoritative.
 
 ## Exit codes lie
 
@@ -69,15 +69,20 @@ Benign noise, do not diagnose from it: `ERROR: failed to copy trust settings of 
 
 ## Auth
 
-Cursor auth lives in the **macOS Keychain** ("Cursor Safe Storage" / `cursor-access-token`). It survives reboots, sandboxes, and CLI upgrades — auth loss is a rare diagnosis, not a first guess.
+The CLI accepts either an inherited `CURSOR_API_KEY` or a stored interactive login. For headless sessions and CI, Cursor recommends the environment variable:
 
 ```bash
-"$AGENT" status   # run unsandboxed; prints login state
+test -n "${CURSOR_API_KEY:-}" || echo "CURSOR_API_KEY is not set; checking stored login"
+"$AGENT" status   # run unsandboxed; validates whichever auth source is available
 ```
 
-- `agent login` is a **last resort**, only after `status` actually reports logged-out.
-- Fully headless / CI: set `CURSOR_API_KEY` in the environment, or pass `--api-key <key>`.
+- Supply `CURSOR_API_KEY` to the environment that launches the host agent so the child Cursor CLI inherits it. An `.env` file is not loaded automatically unless the shell, launcher, or CI step explicitly loads it. Restart an already-running host after installing the CLI or adding the variable so it inherits the new `PATH` and environment.
+- Never echo the value, put it in the agent prompt, save it in a temporary file, include it in reports, or pass it directly as `--api-key <key>` where shell history and process listings may expose it.
+- If `CURSOR_API_KEY` is present, do not run `agent login`; use `status` and `--list-models` to validate access.
+- Without the variable, Cursor can use credentials saved by `agent login` (the macOS CLI stores them in Keychain). Run `agent login` only after `status` actually reports logged-out.
 - `agent logout` clears stored auth — never run it to "reset" a failing run.
+
+Generate user API keys under **Integrations → User API Keys** in the Cursor dashboard. See Cursor's [CLI authentication guide](https://docs.cursor.com/en/cli/reference/authentication).
 
 ## Session resume
 

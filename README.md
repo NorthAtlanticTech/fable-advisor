@@ -6,11 +6,11 @@ Claude Code lets every subagent run on a different model — and lets the sessio
 
 | Lane | Producer | Invocation | Route here when |
 |---|---|---|---|
-| Routine | **Grok 4.5** | `grok-implementer` agent (default) | The spec fully determines the outcome — Grok does the typing via the [Cursor CLI](https://cursor.com/cli) |
+| Routine | **Grok 4.6** | `grok-implementer` agent (default) | The spec fully determines the outcome — Grok does the typing via the [Cursor CLI](https://cursor.com/cli) |
 | Cross-vendor | GPT-5.6 Sol (high reasoning) | `codex-implementer` agent | Correctness-critical, or you want a second independent implementation to compare |
 | Judgment | Fable 5 | `fable-advisor` agent | Commitment boundaries — see below |
 
-Tokens route by volume: the expensive model emits the fewest tokens (judgment and specs), cheap lanes emit the most (code). Implementation mechanics are ~90% of a session's tokens and Grok 4.5 handles them at near-parity — so this runs far cheaper than Fable-for-everything, and every implementation comes from a *different model family* than the architect that reviews it: cross-vendor review is built into the routing, not bolted on. For high-stakes work, race `grok-implementer` and `codex-implementer` on the same spec and let the architect pick the stronger diff.
+Tokens route by volume: the expensive model emits the fewest tokens (judgment and specs), cheap lanes emit the most (code). Implementation mechanics are ~90% of a session's tokens and Grok 4.6 handles them at near-parity — so this runs far cheaper than Fable-for-everything, and every implementation comes from a *different model family* than the architect that reviews it: cross-vendor review is built into the routing, not bolted on. For high-stakes work, race `grok-implementer` and `codex-implementer` on the same spec and let the architect pick the stronger diff.
 
 The plugin ships the **orchestration skill** — the routing doctrine that teaches the session when to use each lane, the cost discipline that keeps the expensive model's own token volume minimal (emit judgment not volume, keep context lean, reason once then hand off), the five-part spec contract that makes context-free delegation safe, and the verification rules that keep cheap lanes honest. It also ships the **cursor-cli skill** — a reference card for driving the Cursor CLI headlessly, including the failure modes that exit 0 while doing nothing.
 
@@ -40,11 +40,26 @@ Then start your session as the architect:
 
 - **Claude Code ≥ 2.1.170** with a subscription that includes Fable 5 (Pro, Max, Team, or Enterprise — all current consumer plans qualify).
 - **No Fable access** (e.g. API-key billing)? Use `/model opus` for the session and change `model: fable` → `model: opus` in the advisor file. Same pattern, model tiers shift down one.
-- **Grok lane (the default implementer):** the `grok-implementer` agent needs the [Cursor CLI](https://cursor.com/cli) installed and authenticated (install from [cursor.com/cli](https://cursor.com/cli), then `agent login`; auth is stored in the macOS Keychain, or set `CURSOR_API_KEY` for headless use). It drives **Grok 4.5** headlessly (`agent -p … --model cursor-grok-4.5-high --force --trust`). Without it the agent reports `STATUS: unavailable` — it never silently falls back to a Claude model. One environment note: the Cursor CLI rewrites `~/.cursor/cli-config.json` on startup, so the Bash call wrapping `agent` must run **outside** Claude Code's command sandbox (or `~/.cursor` must be allowlisted for writes) — a blocked write aborts the run *and still exits 0*. The [`cursor-cli` skill](skills/cursor-cli/SKILL.md) documents that and the other zero-exit failure signatures.
+- **Grok lane (the default implementer):** the `grok-implementer` agent needs the [Cursor CLI](https://cursor.com/cli) installed and authenticated. It drives **Grok 4.6** headlessly (`agent -p … --model cursor-grok-4.6-high --force --trust`). Without the CLI, valid authentication, or access to that exact model slug, the agent reports `STATUS: unavailable` — it never silently falls back to a Claude model. The Cursor CLI rewrites `~/.cursor/cli-config.json` on startup, so the Bash call wrapping `agent` must run **outside** Claude Code's command sandbox (or `~/.cursor` must be allowlisted for writes) — a blocked write aborts the run *and still exits 0*. The [`cursor-cli` skill](skills/cursor-cli/SKILL.md) documents that and the other zero-exit failure signatures.
 - **Codex lane (optional):** the `codex-implementer` agent needs the [OpenAI Codex CLI](https://github.com/openai/codex) installed and authenticated (`npm i -g @openai/codex`, then `codex login`). It invokes **GPT-5.6 Sol** as `gpt-5.6-sol` with `model_reasoning_effort=high`. GPT-5.6 access may be limited during preview; without model access, an installed/authenticated CLI, or successful authentication, the agent reports `STATUS: unavailable` and the other lanes remain unaffected.
 - Heads-up: if a pinned Claude model isn't available on your account, Claude Code silently falls back to your session model — the pattern degrades quietly rather than erroring. If results feel unremarkable, check your plan. (This quiet fallback applies only to Claude model pins — the grok and codex lanes always fail loudly with a structured error.)
 
 Model resolution order in Claude Code: `CLAUDE_CODE_SUBAGENT_MODEL` env var → per-invocation `model` parameter → agent frontmatter → session model.
+
+### Cursor API-key authentication
+
+For headless sessions and CI, use Cursor's recommended environment-variable authentication:
+
+1. Create a user API key in the Cursor dashboard under **Integrations → User API Keys**.
+2. Supply it to the environment that launches Claude Code as `CURSOR_API_KEY`. The Cursor process is a child of Claude Code and inherits that variable automatically; the plugin never needs the key in its prompt or command line.
+3. Confirm that the variable is present without printing it, then launch Claude Code from that same environment:
+
+   ```bash
+   test -n "${CURSOR_API_KEY:-}" || { echo "CURSOR_API_KEY is not set"; exit 1; }
+   claude
+   ```
+
+An `.env` file by itself is not enough unless your shell, launcher, or CI system loads it. In CI, map a secret named `CURSOR_API_KEY` into the step's environment. If you install the CLI or add the variable after Claude Code is already running, restart Claude Code so the new `PATH` and environment are inherited. Never commit the key, paste it into a prompt, echo it in logs, or add it directly to an `agent --api-key …` command where it can leak through shell history or process listings. Interactive local users can instead run `agent login`; the lane checks the inherited environment first and never asks for a login when `CURSOR_API_KEY` is supplied. See Cursor's [CLI authentication guide](https://docs.cursor.com/en/cli/reference/authentication).
 
 ## Use it
 
@@ -95,7 +110,7 @@ touching 3+ files, consult the fable-advisor agent and act on its verdict.
 
 **Why not just run everything on Fable?** You can. It's excellent. It's also the most expensive lane per token, and most of a session's tokens are implementation mechanics that the cheap lanes handle at near-parity. Spend the premium where judgment lives.
 
-**Upgrading from v2?** v3 replaced the Sonnet/Opus `implementer` agent with `grok-implementer` — Grok 4.5 (now driven via the [Cursor CLI](https://cursor.com/cli)) is the default typing lane. v3.1 upgrades the optional `codex-implementer` lane from GPT-5.5 to GPT-5.6 Sol at high reasoning. The `fable-advisor` agent and advisor-only mode work exactly as before. If you preferred the Claude implementer, grab [`implementer.md` from the v2.1.0 tag](https://github.com/DannyMac180/fable-advisor/blob/3c1846c/agents/implementer.md).
+**Upgrading from v2?** v3 replaced the Sonnet/Opus `implementer` agent with `grok-implementer` — Grok 4.6 (driven via the [Cursor CLI](https://cursor.com/cli)) is now the default typing lane. v3.1 upgraded the optional `codex-implementer` lane from GPT-5.5 to GPT-5.6 Sol at high reasoning. The `fable-advisor` agent and advisor-only mode work exactly as before. If you preferred the Claude implementer, grab [`implementer.md` from the v2.1.0 tag](https://github.com/DannyMac180/fable-advisor/blob/3c1846c/agents/implementer.md).
 
 **Why Grok and GPT-5.6 Sol lanes in a Claude plugin?** Vendor diversity. Models from one family share blind spots; an independent implementation from a different lineage catches what same-family review misses — and with Claude as the architect, *every* diff now gets cross-vendor review for free. The architect stays Claude — the lanes are producers, not judges.
 
