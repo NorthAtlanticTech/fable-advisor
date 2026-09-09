@@ -10,7 +10,7 @@ Claude Code lets every subagent run on a different model — and lets the sessio
 
 | Lane | Producer | Invocation | Route here when |
 |---|---|---|---|
-| Routine A | **Grok 4.5** | `grok-implementer` agent | The spec fully determines the outcome — Grok does the typing via the [Cursor CLI](https://cursor.com/cli) |
+| Routine A | **Grok 4.6** | `grok-implementer` agent | The spec fully determines the outcome — Grok does the typing via the [Cursor CLI](https://cursor.com/cli) |
 | Routine B | **GPT-5.6 Luna** | `codex-implementer` agent | The same work, via the [Codex CLI](https://github.com/openai/codex) on the fast service tier |
 | High-complexity | **GPT-5.6 Sol** | `sol-implementer` agent | One-off tasks where judgment the spec can't capture decides the outcome: subtle concurrency, hard debugging, security-sensitive paths, wide refactors |
 | Computer use | **GPT-6 Astra** (`low`) | `codex-implementer`, model overridden | Browser and desktop automation — a long loop of small cheap decisions, not an escalation |
@@ -52,7 +52,7 @@ Then start your session as the architect:
 
 - **Claude Code ≥ 2.1.170** with a subscription that includes Fable 5.1 (Pro, Max, Team, or Enterprise — all current consumer plans qualify). The agents use the `fable` alias, which resolves to Fable 5.1.
 - **No Fable access** (e.g. API-key billing)? Change `model: fable` → `model: opus` in `agents/fable-advisor.md` and `agents/fable-counsel.md`, and run the session on Opus. Same pattern, the Fable role shifts down to Opus.
-- **Grok lane:** `grok-implementer` needs the [Cursor CLI](https://cursor.com/cli) installed and authenticated (install from [cursor.com/cli](https://cursor.com/cli), then `agent login`; auth is stored in the macOS Keychain, or set `CURSOR_API_KEY` for headless use). It drives **Grok 4.5** headlessly (`agent -p … --model cursor-grok-4.5-high --force --trust`). One environment note: the Cursor CLI rewrites `~/.cursor/cli-config.json` on startup, so the Bash call wrapping `agent` must run **outside** Claude Code's command sandbox (or `~/.cursor` must be allowlisted for writes) — a blocked write aborts the run *and still exits 0*. The [`cursor-cli` skill](skills/cursor-cli/SKILL.md) documents that and the other zero-exit failure signatures.
+- **Grok lane:** `grok-implementer` needs the [Cursor CLI](https://cursor.com/cli) installed and authenticated (install from [cursor.com/cli](https://cursor.com/cli), then `agent login`; auth is stored in the macOS Keychain, or set `CURSOR_API_KEY` for headless use). It drives **Grok 4.6 High Fast** headlessly (`agent -p … --model cursor-grok-4.6-high-fast --force --trust`). Grok 4.6 offers `low`/`medium`/`high`/`xhigh` rungs, each with a `-fast` variant, and tier availability varies by plan — the lane verifies the exact slug against `--list-models` before running. One environment note: the Cursor CLI rewrites `~/.cursor/cli-config.json` on startup, so the Bash call wrapping `agent` must run **outside** Claude Code's command sandbox (or `~/.cursor` must be allowlisted for writes) — a blocked write aborts the run *and still exits 0*. The [`cursor-cli` skill](skills/cursor-cli/SKILL.md) documents that and the other zero-exit failure signatures.
 - **Codex lanes:** `codex-implementer`, `sol-implementer`, and `astra-advisor` need the [OpenAI Codex CLI](https://github.com/openai/codex) installed and authenticated (`npm i -g @openai/codex`, then `codex login`). They invoke **GPT-5.6 Luna** (`gpt-5.6-luna`, efforts low–max), **GPT-5.6 Sol** (`gpt-5.6-sol`, efforts low–ultra), and **GPT-6 Astra** (`gpt-6-astra`) respectively.
 - **Astra needs a recent codex build.** `gpt-6-astra` is newer than some installed CLIs — check `codex --version` if `astra-advisor` reports `unavailable`, and update before assuming an account problem. The agent gates the slug at preflight rather than letting a run silently resolve to another model, which would defeat the cross-vendor independence it exists to provide.
 - Every lane reports `STATUS: unavailable` on a missing, unauthenticated, or too-old CLI — it never silently falls back to a Claude model. Without any CLI at all, the pattern degrades to advisor-only mode (below).
@@ -60,6 +60,21 @@ Then start your session as the architect:
 - Heads-up: if a pinned Claude model isn't available on your account, Claude Code silently falls back to your session model — the pattern degrades quietly rather than erroring. If advisor verdicts feel unremarkable, check your plan. (This quiet fallback applies only to Claude model pins — the grok and codex lanes always fail loudly with a structured error.)
 
 Model resolution order in Claude Code: `CLAUDE_CODE_SUBAGENT_MODEL` env var → per-invocation `model` parameter → agent frontmatter → session model. Effort resolution: `CLAUDE_CODE_EFFORT_LEVEL` env var → agent frontmatter `effort` → session `/effort`. `fable-advisor` sets no `effort` and so follows your session; `fable-counsel` pins `high`; the CLI lanes take theirs from the spec, not from frontmatter.
+
+### Cursor API-key authentication
+
+For headless sessions and CI, use Cursor's recommended environment-variable authentication:
+
+1. Create a user API key in the Cursor dashboard under **Integrations → User API Keys**.
+2. Supply it to the environment that launches Claude Code as `CURSOR_API_KEY`. The Cursor process is a child of Claude Code and inherits that variable automatically; the plugin never needs the key in its prompt or command line.
+3. Confirm that the variable is present without printing it, then launch Claude Code from that same environment:
+
+   ```bash
+   test -n "${CURSOR_API_KEY:-}" || { echo "CURSOR_API_KEY is not set"; exit 1; }
+   claude
+   ```
+
+An `.env` file by itself is not enough unless your shell, launcher, or CI system loads it. In CI, map a secret named `CURSOR_API_KEY` into the step's environment. If you install the CLI or add the variable after Claude Code is already running, restart Claude Code so the new `PATH` and environment are inherited. Never commit the key, paste it into a prompt, echo it in logs, or add it directly to an `agent --api-key …` command where it can leak through shell history or process listings. Interactive local users can instead run `agent login`; the lane checks the inherited environment first and never asks for a login when `CURSOR_API_KEY` is supplied. See Cursor's [CLI authentication guide](https://docs.cursor.com/en/cli/reference/authentication).
 
 ## Use it
 
@@ -130,7 +145,7 @@ touching 3+ files, consult the fable-advisor agent and act on its verdict.
 
 **Upgrading from v4?** v5 moves the session architect from Opus to **Fable 5.1**, replaces the Fable 5 `fable-implementer` lane with **`sol-implementer`** (GPT-5.6 Sol via Codex), and unpins reasoning effort everywhere. The Codex plugin integration is new and optional. If you still want a Claude implementation lane, grab [`fable-implementer.md` from the v4.0 tree](https://github.com/DannyMac180/fable-advisor/blob/ad2bdc3/agents/fable-implementer.md).
 
-**Upgrading from v3?** Upstream's v4 moved the architect to Opus, removed the Grok 4.5 lane, and made `codex-implementer` the default typing lane. This fork kept the Grok lane throughout; if you're coming from upstream and want it back, it's [`agents/grok-implementer.md`](agents/grok-implementer.md) here.
+**Upgrading from v3?** Upstream's v4 moved the architect to Opus, removed the Grok 4.6 lane, and made `codex-implementer` the default typing lane. This fork kept the Grok lane throughout; if you're coming from upstream and want it back, it's [`agents/grok-implementer.md`](agents/grok-implementer.md) here.
 
 ## Releases
 

@@ -1,6 +1,6 @@
 ---
 name: orchestration
-description: Routing doctrine for the architect-as-orchestrator pattern — how a Fable 5.1 session splits routine implementation between the co-equal Grok 4.5 and GPT-5.6 Luna lanes, escalates high-complexity one-offs to the GPT-5.6 Sol lane, routes computer-use work to GPT-6 Astra at low effort, picks a reasoning effort per task, and gets every deliverable reviewed before reporting done. USE WHEN delegating implementation work, choosing between grok-implementer/codex-implementer/sol-implementer lanes, choosing a reasoning effort for a lane, routing a browser or computer-use task, writing a spec for a subagent, deciding whether to consult fable-advisor or astra-advisor, convening a counsel, using the Codex plugin's review skills, managing session cost or token spend, or running any multi-task build where the session is the architect.
+description: Routing doctrine for the architect-as-orchestrator pattern — how a Fable 5.1 session splits routine implementation between the co-equal Grok 4.6 and GPT-5.6 Luna lanes, escalates high-complexity one-offs to the GPT-5.6 Sol lane, routes computer-use work to GPT-6 Astra at low effort, picks a reasoning effort per task, and gets every deliverable reviewed before reporting done. USE WHEN delegating implementation work, choosing between grok-implementer/codex-implementer/sol-implementer lanes, choosing a reasoning effort for a lane, routing a browser or computer-use task, writing a spec for a subagent, deciding whether to consult fable-advisor or astra-advisor, convening a counsel, using the Codex plugin's review skills, managing session cost or token spend, or running any multi-task build where the session is the architect.
 ---
 
 # Orchestration — the architect's routing doctrine
@@ -9,7 +9,7 @@ The session is the architect: it owns requirements, architecture, decomposition,
 
 ## Cost discipline — the prime directive
 
-The economics of this pattern: Fable 5.1 orchestrates (judgment-heavy, volume-light), Grok 4.5 and GPT-5.6 Luna share the routine typing (volume-heavy, cheap, cross-vendor), GPT-5.6 Sol takes the hard one-offs (cross-vendor, expensive, only when judgment decides the outcome), GPT-6 Astra drives computer-use work at low effort, and an advisor reads the result in a clean context before anything ships. Three rules follow.
+The economics of this pattern: Fable 5.1 orchestrates (judgment-heavy, volume-light), Grok 4.6 and GPT-5.6 Luna share the routine typing (volume-heavy, cheap, cross-vendor), GPT-5.6 Sol takes the hard one-offs (cross-vendor, expensive, only when judgment decides the outcome), GPT-6 Astra drives computer-use work at low effort, and an advisor reads the result in a clean context before anything ships. Three rules follow.
 
 **Emit judgment, not volume.** The architect's output is decomposition, specs, routing decisions, verdicts on diffs, and short reports. It does not type implementation code, test bodies, boilerplate, or config files. A code block longer than an interface signature or a few illustrative lines is a spec that hasn't been delegated yet — stop and delegate it. Fixing a lane's bug by hand is the same failure in disguise: send a corrected spec back to the lane instead.
 
@@ -23,7 +23,7 @@ What stays with the architect regardless of cost: decomposition, interface desig
 
 | Lane | Producer | Invoke | Route here when |
 |---|---|---|---|
-| Routine A | Grok 4.5 (tier per task) | `grok-implementer` agent | The spec fully determines the outcome: boilerplate, wiring, CRUD, mechanical edits, straightforward features. Requires the [Cursor CLI](https://cursor.com/cli) — see the `cursor-cli` skill. |
+| Routine A | Grok 4.6 (tier per task) | `grok-implementer` agent | The spec fully determines the outcome: boilerplate, wiring, CRUD, mechanical edits, straightforward features. Requires the [Cursor CLI](https://cursor.com/cli) — see the `cursor-cli` skill. |
 | Routine B | GPT-5.6 Luna (effort per task, fast tier) | `codex-implementer` agent | The same class of work as Routine A. Requires the codex CLI. |
 | High-complexity | GPT-5.6 Sol (effort per task, up to `ultra`) | `sol-implementer` agent | The outcome depends heavily on judgment the spec can't capture: subtle concurrency, non-trivial algorithms, security-sensitive paths, hard debugging, wide-blast-radius refactors — or the routine lane has already failed the task once. One-off escalations, never the default. Requires the codex CLI. |
 | Computer use | GPT-6 Astra (`low`) | `codex-implementer` agent, model overridden | Browser and desktop automation — see [Computer use](#computer-use). Not Sol's job. |
@@ -38,7 +38,7 @@ Deciding rule for the tier: how much does the outcome depend on judgment the spe
 - **Availability decides it first.** Whichever CLI is installed and authenticated wins. If only one is, there is no choice to make — use it and move on.
 - **Toolchain affinity.** Work that leans on codex itself (its sandbox, its plugins, computer use) goes to Luna; the codex lane is already there.
 - **Failure distribution.** Two families fail differently. If a task already failed in one routine lane on a spec you believe is correct, re-route it to the *other* routine lane before escalating to Sol — a cheap second family often beats an expensive same-family retry.
-- **Cost and turnaround.** Luna runs on the fast service tier; Grok's tier is chosen per task. When one is materially cheaper for the shape of work in front of you, that is a sufficient reason.
+- **Cost and turnaround.** Both default to a fast tier — Luna via `service_tier="fast"`, Grok via the `-fast` slug variant — so neither is structurally slower. When one is materially cheaper for the shape of work in front of you, that is a sufficient reason.
 - **Vendor diversity across a build.** When several independent specs run in parallel, spreading them across both lanes buys a wider failure distribution for free.
 
 Absent any of those signals, alternate rather than defaulting. A "co-equal" pair that always resolves to the same lane has quietly become a single lane with extra documentation.
@@ -61,7 +61,7 @@ Nothing in the lanes pins an effort — the architect names one per task in the 
 | `max` | ✓ | ✓ | The hardest single-lane tasks: concurrency, security-sensitive paths, gnarly debugging |
 | `ultra` | — | ✓ | Sol only. Maximum reasoning plus codex's own internal task delegation — slow; reserve for wide-blast-radius refactors and problems that have resisted two attempts |
 
-Grok is the exception to the rung vocabulary: the Cursor CLI expresses effort in the *model slug*, not a flag, and tops out at `-high` (`cursor-grok-4.5-high`, `-medium`, `-low`, each with a `-fast` variant). **There is no `xhigh` on Grok.** A spec that needs `xhigh` or above is a spec for a codex lane; the `cursor-cli` skill has the verified slugs.
+Grok is the exception to the rung vocabulary: the Cursor CLI expresses effort in the *model slug*, not a flag. Grok 4.6 has four rungs — `cursor-grok-4.6-low`, `-medium`, `-high`, `-xhigh` — each with a `-fast` variant, and the lane defaults to `cursor-grok-4.6-high-fast`. There is no `max` or `ultra`, so a spec needing either is a spec for a codex lane. Tier availability varies by plan and team policy: never assume a slug exists, run it through the `--list-models` check the `cursor-cli` skill documents.
 
 Luna has no `ultra` and the lane will refuse rather than round it; a task that seems to need `ultra` is a task for Sol. If you omit the effort, the lane runs codex at the user's own configured default and flags that in `GAPS` — acceptable for trivial work, never for an escalation.
 

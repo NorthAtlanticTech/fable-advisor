@@ -1,3 +1,15 @@
+## v3.4.1 (2026-08-20)
+
+### Fix
+
+- use Grok 4.6 High Fast
+
+## v3.4.0 (2026-08-20)
+
+### Feat
+
+- upgrade grok lane to 4.6
+
 ## v3.3.0 (2026-07-28)
 
 ### Feat
