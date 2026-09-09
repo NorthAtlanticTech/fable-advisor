@@ -1,7 +1,7 @@
 {
   "name": "fable-advisor",
   "metadata": {
-    "description": "Model-routing patterns for Claude Code: architect-as-orchestrator with Grok 4.6 and GPT-5.6 Sol implementation lanes and a Fable 5 commitment-boundary advisor."
+    "description": "Model-routing patterns for Claude Code: Fable 5.1 architect-as-orchestrator with co-equal Grok 4.6 and GPT-5.6 Luna routine lanes, a GPT-5.6 Sol high-complexity lane, per-task reasoning effort, and two independent end-of-deliverable reviewers (Fable 5.1 and GPT-6 Astra)."
   },
   "owner": {
     "name": "Jeff Hodges",
@@ -11,7 +11,7 @@
     {
       "name": "fable-advisor",
       "source": "./",
-      "description": "Architect-as-orchestrator: your session runs Claude's most capable model, routing implementation to Grok 4.6 (Cursor CLI) and GPT-5.6 Sol at high reasoning (Codex) — with a commitment-boundary advisor."
+      "description": "Fable 5.1 architect-as-orchestrator: your session writes specs and verdicts, routing routine implementation to Grok 4.6 (Cursor CLI) or GPT-5.6 Luna (Codex CLI) and high-complexity one-offs to GPT-5.6 Sol, effort chosen per task — with a mandatory cross-vendor review from Fable 5.1 and GPT-6 Astra before anything ships."
     }
   ]
 }
