@@ -1,3 +1,17 @@
+## v5.1.0 (2026-09-09)
+
+### Feat
+
+- merge upstream v5, keep the Grok lane, add Astra advisor and counsel
+
+### Fix
+
+- rebase onto origin/main, preserving the Grok 4.6 High Fast lane
+
+## v5.0.0 (2026-09-02)
+
+## v4.0.0 (2026-07-25)
+
 ## v3.4.1 (2026-08-20)
 
 ### Fix
